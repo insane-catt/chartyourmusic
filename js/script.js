@@ -162,6 +162,8 @@ function getAlbums() {
  */
 function chartToImage(ext) {
   const container = document.getElementById('chartContainer');
+  const chartEl = document.getElementById('chart');
+  const titlesEl = document.getElementById('titles');
   const origContainerWidth = container.style.width;
   container.style.border = 'none';
   container.scrollTop = 0;
@@ -173,16 +175,40 @@ function chartToImage(ext) {
     if (w > 0) $(this).css('height', w + 'px');
   });
 
-  // Shrink container to exactly chart+titles width — eliminates excess black on the right.
-  // flex-grow-1 on #chart keeps tiles at the same size after the container narrows.
-  const chartEl = document.getElementById('chart');
-  const titlesEl = document.getElementById('titles');
-  const captureW = chartEl.offsetWidth + (titlesEl ? titlesEl.offsetWidth : 0);
-  container.style.width = captureW + 'px';
+  // Freeze #chart at its current rendered width (prevent flex-shrink from affecting it
+  // when the container is resized to fit content exactly).
+  const frozenChartW = chartEl.offsetWidth;
+  chartEl.style.flexGrow = '0';
+  chartEl.style.flexShrink = '0';
+  chartEl.style.width = frozenChartW + 'px';
+
+  // Expand #titles to its full content width (its inputs may be flex-shrunk smaller than
+  // they need to be, making them partially invisible and leaving black space on the right).
+  let frozenTitlesW = 0;
+  if (titlesEl && chart.options.titles) {
+    const padRight = parseFloat(getComputedStyle(titlesEl).paddingRight) || 0;
+    let maxInputW = 0;
+    titlesEl.querySelectorAll('.title').forEach(inp => {
+      maxInputW = Math.max(maxInputW, inp.scrollWidth);
+    });
+    frozenTitlesW = maxInputW + padRight;
+    titlesEl.style.flexShrink = '0';
+    titlesEl.style.width = frozenTitlesW + 'px';
+  }
+
+  // Set container to exactly chart + titles — no excess black background on the right.
+  container.style.width = (frozenChartW + frozenTitlesW) + 'px';
 
   html2canvas(container, { useCORS: true, scale: window.devicePixelRatio || 1, backgroundColor: '#000000' }).then((canvas) => {
     container.style.border = '1px solid white';
     container.style.width = origContainerWidth;
+    chartEl.style.flexGrow = '';
+    chartEl.style.flexShrink = '';
+    chartEl.style.width = '';
+    if (titlesEl) {
+      titlesEl.style.flexShrink = '';
+      titlesEl.style.width = '';
+    }
     tiles.css('height', '');
 
     const mimeType = ext === 'jpg' ? 'image/jpeg' : 'image/png';
