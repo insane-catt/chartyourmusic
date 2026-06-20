@@ -129,12 +129,21 @@ function getAlbums() {
                 appendTo: 'body',
                 zIndex: 10,
                 helper: 'clone',
-                containment: 'window',
                 scroll: false,
                 start: (e, ui) => {
                   let ref = document.querySelector('.tile-3') || document.querySelector('.tile');
                   let size = ref ? ref.offsetWidth : Math.round($('#chart').width() * 0.1);
                   $(ui.helper).css({ width: size, height: size });
+                },
+                drag: (e, ui) => {
+                  const r = document.getElementById('results').getBoundingClientRect();
+                  const hH = ui.helper.height();
+                  // Left bound: results left edge; right: unconstrained (matches results width)
+                  if (ui.position.left < r.left) ui.position.left = r.left;
+                  // Vertical: keep within window
+                  if (ui.position.top < 0) ui.position.top = 0;
+                  if (ui.position.top + hH > window.innerHeight)
+                    ui.position.top = window.innerHeight - hH;
                 }
               });
               $(img).css({ height: $('#results').width() / 2 });
@@ -220,12 +229,19 @@ function addCustomImage() {
     appendTo: 'body',
     zIndex: 10,
     helper: 'clone',
-    containment: 'window',
     scroll: false,
     start: (e, ui) => {
       let ref = document.querySelector('.tile-3') || document.querySelector('.tile');
       let size = ref ? ref.offsetWidth : Math.round($('#chart').width() * 0.1);
       $(ui.helper).css({ width: size, height: size });
+    },
+    drag: (e, ui) => {
+      const r = document.getElementById('results').getBoundingClientRect();
+      const hH = ui.helper.height();
+      if (ui.position.left < r.left) ui.position.left = r.left;
+      if (ui.position.top < 0) ui.position.top = 0;
+      if (ui.position.top + hH > window.innerHeight)
+        ui.position.top = window.innerHeight - hH;
     }
   });
   $(img).css({ height: $('#results').width() / 2 });
