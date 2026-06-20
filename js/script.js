@@ -378,6 +378,11 @@ function repaintChart() {
     images.get(i).src = chart.sources[i];
   }
 
+  // During tile drag: only update image sources (done above). Rebuilding #titles
+  // here would reset input widths to overestimated em values, momentarily shrinking
+  // #chart before updateTitlesHeight can correct it. Full rebuild happens in stop.
+  if (dragIndex !== -1) return;
+
   let height = $('#chartContainer').height();
 
   $('#titles').html('');
@@ -453,14 +458,7 @@ function generateChart() {
         repaintChart();
       } else if ($(ui.draggable).hasClass('tile')) {
         e.target.style.opacity = 1;
-        dragIndex = -1;
-        // Reset the JS-set inline styles so CSS constraints (e.g. mobile 28% flex rule)
-        // are restored before updateTitlesHeight recalculates the container width.
-        const titlesEl = document.getElementById('titles');
-        const containerEl = document.getElementById('chartContainer');
-        if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
-        if (containerEl) containerEl.style.width = '';
-        setTimeout(updateTitlesHeight, 0);
+        // dragIndex reset + full layout cleanup happen in draggable stop callback
       }
     },
     // Dynamically rearranges chart during hover
@@ -499,6 +497,17 @@ function generateChart() {
         width: e.target.offsetWidth,
         height: e.target.offsetHeight
       });
+    },
+    stop: () => {
+      // Always fires after drop (or when dropped on a non-droppable area).
+      // Reset dragIndex and inline styles, then repaint so titles are rebuilt
+      // with correct order and updateTitlesHeight can set the container width.
+      dragIndex = -1;
+      const titlesEl = document.getElementById('titles');
+      const containerEl = document.getElementById('chartContainer');
+      if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
+      if (containerEl) containerEl.style.width = '';
+      repaintChart();
     }
   });
 
