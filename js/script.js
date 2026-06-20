@@ -65,6 +65,36 @@ function updateTitlesHeight() {
     // Too many titles to fit: use natural height (some will be clipped)
     $items.css('height', '');
   }
+
+  // Collage mode + titles visible: shrink each input to its actual rendered text width,
+  // then shrink #chartContainer so there is no trailing black to the right of the text.
+  if (chart && !chart.options.grid && chart.options.titles && n > 0) {
+    const containerEl = document.getElementById('chartContainer');
+    const chartEl = document.getElementById('chart');
+    const mainEl = containerEl.parentElement;
+    const mainStyle = getComputedStyle(mainEl);
+    const mainW = mainEl.clientWidth
+      - (parseFloat(mainStyle.paddingLeft) || 0)
+      - (parseFloat(mainStyle.paddingRight) || 0);
+
+    // Canvas text measurement uses the same font as the browser renders
+    const canvasCtx = document.createElement('canvas').getContext('2d');
+    canvasCtx.font = style.font;
+
+    // Read chartEl width BEFORE changing input widths (flex will redistribute after)
+    const chartW = chartEl.offsetWidth;
+    const padRight = parseFloat(style.paddingRight) || 0;
+
+    let maxTextW = 0;
+    $items.each(function () {
+      // +6px so the cursor/caret never clips the last glyph
+      const tw = Math.ceil(canvasCtx.measureText(this.value).width) + 6;
+      this.style.width = tw + 'px';
+      if (tw > maxTextW) maxTextW = tw;
+    });
+
+    containerEl.style.width = Math.min(chartW + maxTextW + padRight, mainW) + 'px';
+  }
 }
 
 /**
@@ -350,8 +380,7 @@ function repaintChart() {
       input.style.width = (w * 0.55 + 1) + 'em';
       $(input).change((e) => {
         chart.titles[$('.title').index(e.target)] = e.target.value;
-        let dw = getDisplayWidth(e.target.value);
-        e.target.style.width = (dw * 0.55 + 1) + 'em';
+        setTimeout(updateTitlesHeight, 0);
       });
       $('#titles').append(input);
     }
@@ -742,6 +771,9 @@ function titleToggle() {
       $('#chartContainer').css({
         width: Math.min(100, 40 + 10 * chart.options.cols) + '%'
       });
+  } else {
+    // Collage mode: when hiding titles, restore full-width so the chart expands
+    if (!chart.options.titles) $('#chartContainer').css({ width: '100%' });
   }
   resize();
   storeToJSON();
