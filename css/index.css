@@ -7987,11 +7987,12 @@ input[type=radio] {
   .mobile-panel.mobile-panel-active {
     display: block; }
 
-  /* 4-column image grid; panel above handles scroll */
+  /* 3-column image grid; !important overrides Bootstrap d-flex */
   #results {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px; }
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 4px; }
 
   #results img {
     width: 100%;
