@@ -165,8 +165,14 @@ function chartToImage(ext) {
   const chartEl = document.getElementById('chart');
   const titlesEl = document.getElementById('titles');
   const origContainerWidth = container.style.width;
+  const origContainerHeight = container.style.height;
   container.style.border = 'none';
   container.scrollTop = 0;
+
+  // On mobile #chartContainer has flex:1 and grows taller than its tile content,
+  // leaving a large black strip below. Pin the container height to the tile area.
+  const contentH = chartEl.offsetHeight;
+  if (contentH > 0) container.style.height = contentH + 'px';
 
   // Set each tile's height = its own width (html2canvas 1.3.x ignores aspect-ratio)
   const tiles = $('#chart img.tile');
@@ -175,41 +181,51 @@ function chartToImage(ext) {
     if (w > 0) $(this).css('height', w + 'px');
   });
 
-  // Freeze #chart at its current rendered width (prevent flex-shrink from affecting it
-  // when the container is resized to fit content exactly).
-  const frozenChartW = chartEl.offsetWidth;
-  chartEl.style.flexGrow = '0';
-  chartEl.style.flexShrink = '0';
-  chartEl.style.width = frozenChartW + 'px';
+  // Padding values to restore as margins after cropping
+  const titlesRightPad = (titlesEl && titlesEl.offsetWidth > 0)
+    ? parseFloat(getComputedStyle(titlesEl).paddingRight) || 0
+    : 0;
+  const chartBottomPad = parseFloat(getComputedStyle(chartEl).paddingBottom) || 0;
 
-  // Expand #titles to its full content width (its inputs may be flex-shrunk smaller than
-  // they need to be, making them partially invisible and leaving black space on the right).
-  let frozenTitlesW = 0;
-  if (titlesEl && chart.options.titles) {
-    const padRight = parseFloat(getComputedStyle(titlesEl).paddingRight) || 0;
-    let maxInputW = 0;
-    titlesEl.querySelectorAll('.title').forEach(inp => {
-      maxInputW = Math.max(maxInputW, inp.scrollWidth);
-    });
-    frozenTitlesW = maxInputW + padRight;
-    titlesEl.style.flexShrink = '0';
-    titlesEl.style.width = frozenTitlesW + 'px';
-  }
-
-  // Set container to exactly chart + titles — no excess black background on the right.
-  container.style.width = (frozenChartW + frozenTitlesW) + 'px';
-
-  html2canvas(container, { useCORS: true, scale: window.devicePixelRatio || 1, backgroundColor: '#000000' }).then((canvas) => {
+  html2canvas(container, { useCORS: true, scale: window.devicePixelRatio || 1, backgroundColor: '#000000' }).then((rawCanvas) => {
     container.style.border = '1px solid white';
     container.style.width = origContainerWidth;
-    chartEl.style.flexGrow = '';
-    chartEl.style.flexShrink = '';
-    chartEl.style.width = '';
-    if (titlesEl) {
-      titlesEl.style.flexShrink = '';
-      titlesEl.style.width = '';
-    }
+    container.style.height = origContainerHeight;
     tiles.css('height', '');
+
+    // Crop any trailing black from the right and bottom edges of the canvas.
+    const scale = window.devicePixelRatio || 1;
+    const W = rawCanvas.width, H = rawCanvas.height;
+    const pixels = rawCanvas.getContext('2d').getImageData(0, 0, W, H).data;
+
+    function hasContent(x, y) {
+      const i = (y * W + x) * 4;
+      return pixels[i] > 4 || pixels[i + 1] > 4 || pixels[i + 2] > 4;
+    }
+
+    let rightEdge = W;
+    scanRight: for (let x = W - 1; x >= 0; x--) {
+      for (let y = 0; y < H; y++) {
+        if (hasContent(x, y)) { rightEdge = x + 1; break scanRight; }
+      }
+    }
+    rightEdge = Math.min(rightEdge + Math.ceil(titlesRightPad * scale), W);
+
+    let bottomEdge = H;
+    scanBottom: for (let y = H - 1; y >= 0; y--) {
+      for (let x = 0; x < W; x++) {
+        if (hasContent(x, y)) { bottomEdge = y + 1; break scanBottom; }
+      }
+    }
+    bottomEdge = Math.min(bottomEdge + Math.ceil(chartBottomPad * scale), H);
+
+    let canvas = rawCanvas;
+    if (rightEdge < W || bottomEdge < H) {
+      canvas = document.createElement('canvas');
+      canvas.width = rightEdge;
+      canvas.height = bottomEdge;
+      canvas.getContext('2d').drawImage(rawCanvas, 0, 0);
+    }
 
     const mimeType = ext === 'jpg' ? 'image/jpeg' : 'image/png';
     const filename = (chart.name || 'chart') + '.' + ext;
