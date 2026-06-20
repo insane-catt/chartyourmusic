@@ -7929,13 +7929,13 @@ input[type=radio] {
     max-height: 65vh;
     max-height: 65svh;
     overflow: hidden;
-    padding: 8px;
+    padding: 4px 0 0 0;
     display: flex;
     flex-direction: column; }
 
   main header {
     flex-shrink: 0;
-    padding: 4px 0;
+    padding: 4px 8px;
     margin-bottom: 4px !important; }
 
   main header .btn {

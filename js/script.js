@@ -79,9 +79,15 @@ function updateTitlesHeight() {
     const containerEl = document.getElementById('chartContainer');
     const chartEl = document.getElementById('chart');
 
-    // Snapshot chart width BEFORE touching #titles flex — on mobile the CSS 28% rule
-    // makes chart proportionally wide; reading after the override captures a shrunken value.
-    const chartW = chartEl.offsetWidth;
+    // On mobile the chart width should equal the scroll wrapper width (≈ screen width)
+    // so tiles fill the viewport. Using the scroll wrapper's offsetWidth is also
+    // stable across resize events: URL-bar show/hide changes viewport HEIGHT only,
+    // not WIDTH, so this value never drifts — fixing the aside-scroll shrink bug.
+    // On desktop, fall back to chartEl.offsetWidth (CSS-determined size).
+    const scrollWrapper = document.getElementById('chartScrollWrapper');
+    const chartW = (scrollWrapper && window.innerWidth <= 767)
+      ? scrollWrapper.offsetWidth
+      : chartEl.offsetWidth;
 
     // Override any CSS flex constraint on #titles (e.g. mobile 28% rule)
     titlesEl.style.flex = '0 0 auto';
