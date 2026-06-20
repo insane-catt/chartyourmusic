@@ -7830,13 +7830,16 @@ main {
  */
 #chartContainer {
   background-color: black;
-  border: 1px solid white; }
+  border: 1px solid white;
+  align-items: flex-start; }
 
 #chart {
-  margin: 0 auto; }
+  margin: 0 auto;
+  align-content: flex-start; }
 
 .tile {
-  aspect-ratio: 1; }
+  aspect-ratio: 1;
+  align-self: flex-start; }
 
 .tile-2 {
   width: 16.66667%; }
@@ -7986,11 +7989,8 @@ input[type=radio] {
     max-height: none;
     flex: 1; }
 
-  #chart {
-    align-content: flex-start; }
-
   #titles {
-    font-size: 0.5em; }
+    font-size: 0.35em; }
 
   #titles .title {
     height: 1.2em;

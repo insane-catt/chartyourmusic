@@ -36,6 +36,12 @@ function optionsArrow() {
 function resize() {
   let w = $('#results').width() / 2;
   if (w > 0) $('.result').css({ height: w });
+  updateTitlesHeight();
+}
+
+function updateTitlesHeight() {
+  const h = document.getElementById('chart').offsetHeight;
+  if (h > 0) $('#titles').css({ height: h + 'px' });
 }
 
 /**
@@ -124,12 +130,12 @@ function chartToImage(ext) {
   const container = document.getElementById('chartContainer');
   container.style.border = 'none';
 
-  // Set explicit tile heights — html2canvas 1.3.x ignores CSS aspect-ratio
+  // Set each tile's height = its own width (html2canvas 1.3.x ignores aspect-ratio)
   const tiles = $('#chart img.tile');
-  if (tiles.length) {
-    const sz = tiles[0].offsetWidth;
-    tiles.css('height', sz + 'px');
-  }
+  tiles.each(function () {
+    const w = this.offsetWidth;
+    if (w > 0) $(this).css('height', w + 'px');
+  });
 
   html2canvas(container, { useCORS: true, scale: 1 }).then((canvas) => {
     container.style.border = '1px solid white';
@@ -260,6 +266,7 @@ function repaintChart() {
     maxHeight = true;
   }
 
+  setTimeout(updateTitlesHeight, 0);
   storeToJSON();
 }
 
@@ -355,6 +362,7 @@ function generateChart() {
   resize();
   outerPadding();
   innerPadding();
+  setTimeout(updateTitlesHeight, 0);
   storeToJSON();
 }
 
