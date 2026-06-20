@@ -7831,7 +7831,8 @@ main {
 #chartContainer {
   background-color: black;
   border: 1px solid white;
-  align-items: flex-start; }
+  align-items: flex-start;
+  overflow: hidden; }
 
 #chart {
   margin: 0 auto;
@@ -7853,8 +7854,7 @@ main {
 #titles {
   display: flex;
   flex-direction: column;
-  font-size: 0.8em;
-  overflow: hidden; }
+  font-size: 0.8em; }
 
 .title {
   background: transparent;
@@ -7991,10 +7991,16 @@ input[type=radio] {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; }
 
+  #chart {
+    padding: 4px !important; }
+
   #titles {
     font-size: 0.5em;
     max-width: 28%;
-    flex: 0 0 28%; }
+    flex: 0 0 28%;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-right: 4px !important; }
 
   #titles .title {
     height: 1.2em;

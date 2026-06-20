@@ -137,7 +137,6 @@ function chartToImage(ext) {
   const container = document.getElementById('chartContainer');
   container.style.border = 'none';
   container.scrollTop = 0;
-  container.scrollLeft = 0;
 
   // Set each tile's height = its own width (html2canvas 1.3.x ignores aspect-ratio)
   const tiles = $('#chart img.tile');
@@ -146,7 +145,7 @@ function chartToImage(ext) {
     if (w > 0) $(this).css('height', w + 'px');
   });
 
-  html2canvas(container, { useCORS: true, scale: 1, backgroundColor: '#000000' }).then((canvas) => {
+  html2canvas(container, { useCORS: true, scale: window.devicePixelRatio || 1, backgroundColor: '#000000' }).then((canvas) => {
     container.style.border = '1px solid white';
     tiles.css('height', '');
 
