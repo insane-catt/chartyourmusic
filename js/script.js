@@ -150,6 +150,35 @@ function chartToImage(ext) {
 }
 
 /**
+ * Returns display width of a string, counting full-width CJK characters as 2
+ */
+function getDisplayWidth(str) {
+  let width = 0;
+  for (const char of str) {
+    const code = char.codePointAt(0);
+    if (
+      (code >= 0x1100 && code <= 0x115F) ||
+      (code >= 0x2E80 && code <= 0x303E) ||
+      (code >= 0x3041 && code <= 0x33FF) ||
+      (code >= 0x3400 && code <= 0x4DBF) ||
+      (code >= 0x4E00 && code <= 0x9FFF) ||
+      (code >= 0xA000 && code <= 0xA4CF) ||
+      (code >= 0xAC00 && code <= 0xD7AF) ||
+      (code >= 0xF900 && code <= 0xFAFF) ||
+      (code >= 0xFE10 && code <= 0xFE19) ||
+      (code >= 0xFE30 && code <= 0xFE6F) ||
+      (code >= 0xFF01 && code <= 0xFF60) ||
+      (code >= 0xFFE0 && code <= 0xFFE6)
+    ) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+}
+
+/**
  * Rearranges the artwork and titles for visible chart
  */
 function repaintChart() {
@@ -167,12 +196,12 @@ function repaintChart() {
       input.type = 'text';
       input.className = 'title';
       input.value = chart.titles[i];
-      input.style.width =
-        input.value.length * (0.8 - input.value.length / 200) + 'em';
+      let w = getDisplayWidth(input.value);
+      input.style.width = w * (0.8 - w / 200) + 'em';
       $(input).change((e) => {
         chart.titles[$('.title').index(e.target)] = e.target.value;
-        e.target.style.width =
-          e.target.value.length * (0.8 - input.value.length / 200) + 'em';
+        let dw = getDisplayWidth(e.target.value);
+        e.target.style.width = dw * (0.8 - dw / 200) + 'em';
       });
       $('#titles').append(input);
     }
