@@ -7854,16 +7854,13 @@ main {
   display: flex;
   flex-direction: column;
   font-size: 0.8em;
-  max-width: 30%;
   overflow: hidden; }
 
 .title {
   background: transparent;
   border: none;
   color: white;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 100%; }
+  overflow: visible; }
 
 #chartList {
   max-height: 25vh; }

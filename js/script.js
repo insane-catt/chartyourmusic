@@ -136,6 +136,8 @@ function getAlbums() {
 function chartToImage(ext) {
   const container = document.getElementById('chartContainer');
   container.style.border = 'none';
+  container.scrollTop = 0;
+  container.scrollLeft = 0;
 
   // Set each tile's height = its own width (html2canvas 1.3.x ignores aspect-ratio)
   const tiles = $('#chart img.tile');
