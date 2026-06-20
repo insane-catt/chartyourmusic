@@ -34,10 +34,8 @@ function optionsArrow() {
  * Resize images in #results and #charts to keep them square
  */
 function resize() {
-  $('img').each((i, img) => {
-    img.style.maxHeight = img.borderWidth + 'px';
-    img.style.minHeight = img.borderWidth + 'px';
-  });
+  let w = $('#results').width() / 2;
+  if (w > 0) $('.result').css({ height: w });
 }
 
 /**
@@ -125,7 +123,8 @@ function getAlbums() {
 function chartToImage(ext) {
   $('#chartContainer').css({ border: 'none' });
   html2canvas(document.getElementById('chartContainer'), {
-    useCORS: true
+    useCORS: true,
+    scale: 1
   }).then((canvas) => {
     const mimeType = ext === 'jpg' ? 'image/jpeg' : 'image/png';
     const filename = (chart.name || 'chart') + '.' + ext;
@@ -145,6 +144,19 @@ function chartToImage(ext) {
 }
 
 /**
+ * Switch mobile tab panels
+ */
+function mobileTab(panel) {
+  $('.mobile-panel').removeClass('mobile-panel-active');
+  $('#tab' + panel.charAt(0).toUpperCase() + panel.slice(1)).addClass('mobile-panel-active');
+  $('.mobile-tab').removeClass('mobile-tab-active');
+  event.currentTarget.classList.add('mobile-tab-active');
+  if (panel === 'options') {
+    $('#options').addClass('show');
+  }
+}
+
+/**
  * Add custom image URL to results as a draggable element
  */
 function addCustomImage() {
@@ -153,6 +165,8 @@ function addCustomImage() {
   let artist = $('#customArtist').val().trim();
   let album = $('#customAlbum').val().trim();
   let title = [artist, album].filter(Boolean).join(' - ');
+
+  $('#results').html('');
 
   let img = document.createElement('img');
   img.src = url;
@@ -219,11 +233,11 @@ function repaintChart() {
       input.className = 'title';
       input.value = chart.titles[i];
       let w = getDisplayWidth(input.value);
-      input.style.width = w * (0.8 - w / 200) + 'em';
+      input.style.width = (w * 0.55 + 1) + 'em';
       $(input).change((e) => {
         chart.titles[$('.title').index(e.target)] = e.target.value;
         let dw = getDisplayWidth(e.target.value);
-        e.target.style.width = dw * (0.8 - dw / 200) + 'em';
+        e.target.style.width = (dw * 0.55 + 1) + 'em';
       });
       $('#titles').append(input);
     }
