@@ -7987,12 +7987,13 @@ input[type=radio] {
   .mobile-panel.mobile-panel-active {
     display: block; }
 
-  /* 3-column image grid; !important overrides Bootstrap d-flex */
+  /* 4-column grid; override Bootstrap d-flex and overflow-auto */
   #results {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    padding: 4px; }
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 4px;
+    overflow: visible !important; }
 
   #results img {
     width: 100%;
