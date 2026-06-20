@@ -41,14 +41,30 @@ function resize() {
 
 function updateTitlesHeight() {
   const $titles = $('#titles');
+  const titlesEl = $titles[0];
   const chartH = document.getElementById('chart').offsetHeight;
   if (chartH <= 0) return;
+
   $titles.css('height', chartH + 'px');
-  const n = $titles.find('.title').length;
+  const $items = $titles.find('.title');
+  const n = $items.length;
   if (n === 0) return;
-  // Use space-evenly only when titles actually fit; otherwise stack from top
-  const lineH = parseFloat(getComputedStyle($titles[0]).fontSize) * 1.5;
-  $titles.css('justify-content', n * lineH <= chartH ? 'space-evenly' : 'flex-start');
+
+  const style = getComputedStyle(titlesEl);
+  const pt = parseFloat(style.paddingTop) || 0;
+  const pb = parseFloat(style.paddingBottom) || 0;
+  const fs = parseFloat(style.fontSize) || 12;
+  const contentH = chartH - pt - pb;
+  const slotH = contentH / n;
+
+  $titles.css('justify-content', 'flex-start');
+  if (slotH >= 8) {
+    // Each title gets an equal slice — first aligns with first tile, last with last tile
+    $items.css('height', slotH + 'px');
+  } else {
+    // Too many titles to fit: use natural height (some will be clipped)
+    $items.css('height', '');
+  }
 }
 
 /**
@@ -630,6 +646,7 @@ function outerPadding() {
     paddingRight: padding * 2
   });
   $('#outerPaddingNum').html(padding);
+  setTimeout(updateTitlesHeight, 0);
 }
 
 /**
