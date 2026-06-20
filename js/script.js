@@ -70,8 +70,18 @@ function updateTitlesHeight() {
   // then set #chartContainer to exactly chart width + longest title width.
   // On mobile this may exceed the viewport — the parent scroll wrapper handles overflow.
   if (chart && !chart.options.grid && chart.options.titles && n > 0) {
+    // During drag: repaintChart() fires on every tile-over event and resets inputs to
+    // overestimated em widths, making #titles too wide and chartW too small. Each
+    // updateTitlesHeight call would then shrink the container further. Skip entirely
+    // while dragging — the drop handler resets the layout cleanly after the drag ends.
+    if (dragIndex !== -1) return;
+
     const containerEl = document.getElementById('chartContainer');
     const chartEl = document.getElementById('chart');
+
+    // Snapshot chart width BEFORE touching #titles flex — on mobile the CSS 28% rule
+    // makes chart proportionally wide; reading after the override captures a shrunken value.
+    const chartW = chartEl.offsetWidth;
 
     // Override any CSS flex constraint on #titles (e.g. mobile 28% rule)
     titlesEl.style.flex = '0 0 auto';
@@ -82,20 +92,6 @@ function updateTitlesHeight() {
     canvasCtx.font = style.font;
     const padRight = parseFloat(style.paddingRight) || 0;
 
-    // When NOT dragging: read chartW before setting inputs so the CSS 28% mobile rule
-    // (which gives #chart its initial proportional width) is still in effect.
-    //
-    // When dragging: repaintChart() fires on every tile-over event and resets inputs to
-    // overestimated em widths, making #titles wider than necessary and #chart too narrow.
-    // Reading chartW before fixing those widths captures the wrong (shrunken) value and
-    // causes the container to shrink on each cycle. Fix: set inputs to canvas widths FIRST
-    // so #titles shrinks to the correct size, then read chartW — which is now stable
-    // (container − correct-titles) and won't keep drifting down.
-    let chartW;
-    if (dragIndex === -1) {
-      chartW = chartEl.offsetWidth;   // read before inputs change (non-drag)
-    }
-
     let maxTextW = 0;
     $items.each(function () {
       // +6px so the cursor/caret never clips the last glyph
@@ -103,10 +99,6 @@ function updateTitlesHeight() {
       this.style.width = tw + 'px';
       if (tw > maxTextW) maxTextW = tw;
     });
-
-    if (dragIndex !== -1) {
-      chartW = chartEl.offsetWidth;   // read after inputs are corrected (drag)
-    }
 
     containerEl.style.width = (chartW + maxTextW + padRight) + 'px';
   } else if (chart) {
@@ -462,6 +454,13 @@ function generateChart() {
       } else if ($(ui.draggable).hasClass('tile')) {
         e.target.style.opacity = 1;
         dragIndex = -1;
+        // Reset the JS-set inline styles so CSS constraints (e.g. mobile 28% flex rule)
+        // are restored before updateTitlesHeight recalculates the container width.
+        const titlesEl = document.getElementById('titles');
+        const containerEl = document.getElementById('chartContainer');
+        if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
+        if (containerEl) containerEl.style.width = '';
+        setTimeout(updateTitlesHeight, 0);
       }
     },
     // Dynamically rearranges chart during hover
@@ -922,27 +921,4 @@ $(() => {
   $('#imgImportURLDiv').hide();
   $('#imgImportFileRadio').prop('checked', true);
   window.onresize = resize;
-
-  // On mobile: lock main/aside heights to pixel values captured at init time.
-  // iOS Safari fires a resize event and changes window.innerHeight whenever the
-  // URL bar shows or hides (during pull-to-refresh, drag start, etc.), which makes
-  // vh-based heights shrink. Fixing to px once avoids this — URL bar height changes
-  // are height-only (width stays the same), so we only re-lock on orientation change.
-  function lockMobileHeights() {
-    if (window.innerWidth > 767) return;
-    const h = window.innerHeight;
-    const mainEl = document.querySelector('main');
-    const asideEl = document.querySelector('aside');
-    if (mainEl) {
-      mainEl.style.height = Math.floor(h * 0.55) + 'px';
-      mainEl.style.maxHeight = Math.floor(h * 0.55) + 'px';
-    }
-    if (asideEl) {
-      asideEl.style.height = Math.floor(h * 0.45) + 'px';
-    }
-  }
-  lockMobileHeights();
-  window.addEventListener('orientationchange', function () {
-    setTimeout(lockMobileHeights, 300);
-  });
 });
