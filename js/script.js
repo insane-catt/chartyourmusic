@@ -129,6 +129,8 @@ function getAlbums() {
                 appendTo: 'body',
                 zIndex: 10,
                 helper: 'clone',
+                containment: 'window',
+                scroll: false,
                 start: (e, ui) => {
                   // Fixes issue where dragged image is much larger than source image
                   let size = $('#results').width() / 2;
@@ -218,6 +220,8 @@ function addCustomImage() {
     appendTo: 'body',
     zIndex: 10,
     helper: 'clone',
+    containment: 'window',
+    scroll: false,
     start: (e, ui) => {
       let size = $('#results').width() / 2;
       $(ui.helper).css({ width: size, height: size });
