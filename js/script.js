@@ -908,4 +908,20 @@ $(() => {
   $('#imgImportURLDiv').hide();
   $('#imgImportFileRadio').prop('checked', true);
   window.onresize = resize;
+
+  // On mobile: prevent pull-to-refresh and iOS URL-bar collapse when overscrolling
+  // at the top of the chart scroll wrapper. Without this, a downward swipe at
+  // scrollTop=0 triggers the URL bar to appear, which shrinks the vh-based layout.
+  const chartScrollWrapper = document.getElementById('chartScrollWrapper');
+  if (chartScrollWrapper) {
+    let touchStartY = 0;
+    chartScrollWrapper.addEventListener('touchstart', function (e) {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    chartScrollWrapper.addEventListener('touchmove', function (e) {
+      if (this.scrollTop === 0 && e.touches[0].clientY > touchStartY) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
 });
