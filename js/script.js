@@ -140,10 +140,18 @@ function chartToImage(ext) {
       }
     }
 
-    document.body.appendChild(canvas);
-    if (ext === 'jpg') Canvas2Image.saveAsJPEG(canvas, chart.name);
-    else if (ext === 'png') Canvas2Image.saveAsPNG(canvas, chart.name);
-    document.body.removeChild(canvas);
+    const mimeType = ext === 'jpg' ? 'image/jpeg' : 'image/png';
+    const filename = (chart.name || 'chart') + '.' + ext;
+    canvas.toBlob((blob) => {
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, mimeType);
 
     $('#chartContainer').css({ border: '1px solid white' });
   });
