@@ -7990,8 +7990,8 @@ input[type=radio] {
   /* 4-column grid; override Bootstrap d-flex and overflow-auto */
   #results {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     padding: 4px;
     overflow: visible !important; }
 
