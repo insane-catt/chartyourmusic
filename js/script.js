@@ -121,11 +121,25 @@ function getAlbums() {
  * @param {String} ext - png or jpg
  */
 function chartToImage(ext) {
-  $('#chartContainer').css({ border: 'none' });
-  html2canvas(document.getElementById('chartContainer'), {
-    useCORS: true,
-    scale: 1
-  }).then((canvas) => {
+  const container = document.getElementById('chartContainer');
+  const savedZoom = container.style.zoom || '';
+
+  // Reset zoom to 1 so capture is always at natural size
+  container.style.zoom = '1';
+  container.style.border = 'none';
+
+  // Explicitly set tile heights — html2canvas 1.3.x ignores CSS aspect-ratio
+  const tiles = $('#chart img.tile');
+  if (tiles.length) {
+    const sz = tiles[0].offsetWidth;
+    tiles.css('height', sz + 'px');
+  }
+
+  html2canvas(container, { useCORS: true, scale: 1 }).then((canvas) => {
+    container.style.zoom = savedZoom;
+    container.style.border = '1px solid white';
+    tiles.css('height', '');
+
     const mimeType = ext === 'jpg' ? 'image/jpeg' : 'image/png';
     const filename = (chart.name || 'chart') + '.' + ext;
     canvas.toBlob((blob) => {
@@ -138,8 +152,6 @@ function chartToImage(ext) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, mimeType);
-
-    $('#chartContainer').css({ border: '1px solid white' });
   });
 }
 
@@ -154,6 +166,22 @@ function mobileTab(panel) {
   if (panel === 'options') {
     $('#options').addClass('show');
   }
+  if (panel === 'search') {
+    // Recalculate result image sizes now that panel is visible
+    setTimeout(resize, 0);
+  }
+}
+
+/**
+ * Counteract browser zoom on the chart container so chart stays fixed size
+ */
+function updateChartScale() {
+  try {
+    const z = window.outerWidth / window.innerWidth;
+    if (z > 0.1 && z < 10) {
+      document.getElementById('chartContainer').style.zoom = (1 / z);
+    }
+  } catch (e) {}
 }
 
 /**
@@ -754,5 +782,6 @@ $(() => {
 
   $('#imgImportURLDiv').hide();
   $('#imgImportFileRadio').prop('checked', true);
-  window.onresize = resize;
+  window.onresize = function () { resize(); updateChartScale(); };
+  updateChartScale();
 });

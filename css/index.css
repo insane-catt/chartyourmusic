@@ -7793,7 +7793,9 @@ main {
   border: 1px dashed white; }
 
 #results {
-  flex-basis: 10px; }
+  flex-basis: 10px;
+  max-height: 280px;
+  overflow-y: auto; }
   #results img {
     width: 50%; }
     #results img:hover {
@@ -7967,10 +7969,11 @@ input[type=radio] {
     flex-direction: column; }
 
   #results {
+    max-height: none;
     flex: 1; }
 
-  #chartList {
-    max-height: none; }
+  #chart {
+    align-content: flex-start; }
 
   #titles {
     font-size: 0.5em; }

@@ -23,13 +23,12 @@
       <aside class="d-flex flex-column text-white">
         <!-- Mobile Tab Bar -->
         <div id="mobileTabBar">
-          <button class="mobile-tab" onclick="mobileTab('charts')">Charts</button>
           <button class="mobile-tab" onclick="mobileTab('options')">Options</button>
           <button class="mobile-tab mobile-tab-active" onclick="mobileTab('search')">Search</button>
         </div>
 
-        <!-- Charts Panel -->
-        <div id="tabCharts" class="mobile-panel pl-4 py-4">
+        <!-- Charts Panel (desktop only) -->
+        <div id="tabCharts" class="d-none d-md-flex flex-column pl-4 py-4">
 
         <!-- Chart List -->
         <div id="chartList" class="overflow-auto text-center">
