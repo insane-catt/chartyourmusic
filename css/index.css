@@ -7945,7 +7945,8 @@ input[type=radio] {
     min-height: 0;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y pinch-zoom; }
+    touch-action: pan-x pan-y pinch-zoom;
+    overscroll-behavior: contain; }
 
   aside {
     order: 2;
@@ -8003,7 +8004,9 @@ input[type=radio] {
     object-fit: cover; }
 
   #titles {
-    font-size: 0.4em; }
+    font-size: 0.4em;
+    max-width: 28%;
+    flex: 0 0 28%; }
 
   #titles .title {
     height: 1.2em;

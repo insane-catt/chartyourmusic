@@ -73,6 +73,10 @@ function updateTitlesHeight() {
     const containerEl = document.getElementById('chartContainer');
     const chartEl = document.getElementById('chart');
 
+    // Snapshot chart width BEFORE touching #titles flex — on mobile the CSS 28% rule
+    // makes chart proportionally wide; reading after the override captures a shrunken value.
+    const chartW = chartEl.offsetWidth;
+
     // Override any CSS flex constraint on #titles (e.g. mobile 28% rule)
     titlesEl.style.flex = '0 0 auto';
     titlesEl.style.maxWidth = 'none';
@@ -80,9 +84,6 @@ function updateTitlesHeight() {
     // Canvas text measurement uses the same font as the browser renders
     const canvasCtx = document.createElement('canvas').getContext('2d');
     canvasCtx.font = style.font;
-
-    // Read chartEl width BEFORE changing input widths (flex will redistribute after)
-    const chartW = chartEl.offsetWidth;
     const padRight = parseFloat(style.paddingRight) || 0;
 
     let maxTextW = 0;
