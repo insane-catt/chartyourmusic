@@ -158,6 +158,33 @@ function chartToImage(ext) {
 }
 
 /**
+ * Add custom image URL to results as a draggable element
+ */
+function addCustomImage() {
+  let url = $('#customImageURL').val().trim();
+  if (!url) return;
+  let artist = $('#customArtist').val().trim();
+  let album = $('#customAlbum').val().trim();
+  let title = [artist, album].filter(Boolean).join(' - ');
+
+  let img = document.createElement('img');
+  img.src = url;
+  img.title = title;
+  img.className = 'result';
+  $(img).draggable({
+    appendTo: 'body',
+    zIndex: 10,
+    helper: 'clone',
+    start: (e, ui) => {
+      let size = $('#results').width() / 2;
+      $(ui.helper).css({ width: size, height: size });
+    }
+  });
+  $(img).css({ height: $('#results').width() / 2 });
+  $('#results').append(img);
+}
+
+/**
  * Returns display width of a string, counting full-width CJK characters as 2
  */
 function getDisplayWidth(str) {
@@ -330,7 +357,7 @@ function newChart() {
       grid: false,
       rows: 3,
       cols: 3,
-      length: 40,
+      length: 42,
       outerPadding: 10,
       innerPadding: 4,
       titles: false,
