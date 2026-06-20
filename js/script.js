@@ -73,10 +73,6 @@ function updateTitlesHeight() {
     const containerEl = document.getElementById('chartContainer');
     const chartEl = document.getElementById('chart');
 
-    // Snapshot chart width BEFORE touching #titles flex — on mobile the CSS 28% rule
-    // makes chart proportionally wide; reading after the override captures a shrunken value.
-    const chartW = chartEl.offsetWidth;
-
     // Override any CSS flex constraint on #titles (e.g. mobile 28% rule)
     titlesEl.style.flex = '0 0 auto';
     titlesEl.style.maxWidth = 'none';
@@ -86,6 +82,20 @@ function updateTitlesHeight() {
     canvasCtx.font = style.font;
     const padRight = parseFloat(style.paddingRight) || 0;
 
+    // When NOT dragging: read chartW before setting inputs so the CSS 28% mobile rule
+    // (which gives #chart its initial proportional width) is still in effect.
+    //
+    // When dragging: repaintChart() fires on every tile-over event and resets inputs to
+    // overestimated em widths, making #titles wider than necessary and #chart too narrow.
+    // Reading chartW before fixing those widths captures the wrong (shrunken) value and
+    // causes the container to shrink on each cycle. Fix: set inputs to canvas widths FIRST
+    // so #titles shrinks to the correct size, then read chartW — which is now stable
+    // (container − correct-titles) and won't keep drifting down.
+    let chartW;
+    if (dragIndex === -1) {
+      chartW = chartEl.offsetWidth;   // read before inputs change (non-drag)
+    }
+
     let maxTextW = 0;
     $items.each(function () {
       // +6px so the cursor/caret never clips the last glyph
@@ -93,6 +103,10 @@ function updateTitlesHeight() {
       this.style.width = tw + 'px';
       if (tw > maxTextW) maxTextW = tw;
     });
+
+    if (dragIndex !== -1) {
+      chartW = chartEl.offsetWidth;   // read after inputs are corrected (drag)
+    }
 
     containerEl.style.width = (chartW + maxTextW + padRight) + 'px';
   } else if (chart) {
