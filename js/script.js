@@ -132,8 +132,8 @@ function getAlbums() {
                 containment: 'window',
                 scroll: false,
                 start: (e, ui) => {
-                  // Fixes issue where dragged image is much larger than source image
-                  let size = $('#results').width() / 2;
+                  let ref = document.querySelector('.tile-3') || document.querySelector('.tile');
+                  let size = ref ? ref.offsetWidth : Math.round($('#chart').width() * 0.1);
                   $(ui.helper).css({ width: size, height: size });
                 }
               });
@@ -223,7 +223,8 @@ function addCustomImage() {
     containment: 'window',
     scroll: false,
     start: (e, ui) => {
-      let size = $('#results').width() / 2;
+      let ref = document.querySelector('.tile-3') || document.querySelector('.tile');
+      let size = ref ? ref.offsetWidth : Math.round($('#chart').width() * 0.1);
       $(ui.helper).css({ width: size, height: size });
     }
   });
