@@ -40,8 +40,15 @@ function resize() {
 }
 
 function updateTitlesHeight() {
-  const h = document.getElementById('chart').offsetHeight;
-  if (h > 0) $('#titles').css({ height: h + 'px' });
+  const $titles = $('#titles');
+  const chartH = document.getElementById('chart').offsetHeight;
+  if (chartH <= 0) return;
+  $titles.css('height', chartH + 'px');
+  const n = $titles.find('.title').length;
+  if (n === 0) return;
+  // Use space-evenly only when titles actually fit; otherwise stack from top
+  const lineH = parseFloat(getComputedStyle($titles[0]).fontSize) * 1.5;
+  $titles.css('justify-content', n * lineH <= chartH ? 'space-evenly' : 'flex-start');
 }
 
 /**
@@ -137,7 +144,7 @@ function chartToImage(ext) {
     if (w > 0) $(this).css('height', w + 'px');
   });
 
-  html2canvas(container, { useCORS: true, scale: 1 }).then((canvas) => {
+  html2canvas(container, { useCORS: true, scale: 1, backgroundColor: '#000000' }).then((canvas) => {
     container.style.border = '1px solid white';
     tiles.css('height', '');
 

@@ -7853,14 +7853,17 @@ main {
 #titles {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  font-size: 0.8em; }
+  font-size: 0.8em;
+  max-width: 30%;
+  overflow: hidden; }
 
 .title {
   background: transparent;
   border: none;
   color: white;
-  overflow: visible; }
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%; }
 
 #chartList {
   max-height: 25vh; }
@@ -7987,10 +7990,14 @@ input[type=radio] {
 
   #results {
     max-height: none;
-    flex: 1; }
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; }
 
   #titles {
-    font-size: 0.35em; }
+    font-size: 0.5em;
+    max-width: 28%;
+    flex: 0 0 28%; }
 
   #titles .title {
     height: 1.2em;
