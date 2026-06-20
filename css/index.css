@@ -7991,16 +7991,10 @@ input[type=radio] {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; }
 
-  #chart {
-    padding: 4px !important; }
-
   #titles {
     font-size: 0.5em;
     max-width: 28%;
-    flex: 0 0 28%;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
-    padding-right: 4px !important; }
+    flex: 0 0 28%; }
 
   #titles .title {
     height: 1.2em;

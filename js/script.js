@@ -639,12 +639,10 @@ function chartLength() {
 function outerPadding() {
   let padding = $('#outerPadding').val();
   chart.options.outerPadding = padding;
-  $('#chart').css({ padding: padding * 2 });
-  $('#titles').css({
-    paddingTop: padding * 2,
-    paddingBottom: padding * 2,
-    paddingRight: padding * 2
-  });
+  // Use % so padding scales proportionally on any screen size
+  const pct = (padding * 0.2) + '%';
+  $('#chart').css({ padding: pct });
+  $('#titles').css({ paddingTop: pct, paddingBottom: pct, paddingRight: pct });
   $('#outerPaddingNum').html(padding);
   setTimeout(updateTitlesHeight, 0);
 }
@@ -655,7 +653,8 @@ function outerPadding() {
 function innerPadding() {
   let padding = $('#innerPadding').val();
   chart.options.innerPadding = padding;
-  $('#chart img').css({ padding: padding });
+  // Use % so gap between tiles scales with chart size
+  $('#chart img').css({ padding: (padding * 0.15) + '%' });
   $('#innerPaddingNum').html(padding);
 }
 
