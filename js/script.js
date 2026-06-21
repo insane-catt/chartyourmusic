@@ -429,8 +429,11 @@ function generateChart() {
     // Makes tiles get smaller as they go down unless chart is in a grid
     let tile_n = 'tile-1';
     if (!chart.options.grid) {
-      if (i >= 52) tile_n = 'tile-4';
-      else if (i >= 22) tile_n = 'tile-3';
+      // For 100 tiles: each size tier spans exactly 3 rows
+      const tile3Start = (length === 100) ? 28 : 22;
+      const tile4Start = (length === 100) ? 58 : 52;
+      if (i >= tile4Start) tile_n = 'tile-4';
+      else if (i >= tile3Start) tile_n = 'tile-3';
       else if (i >= 10) tile_n = 'tile-2';
     }
 
@@ -493,29 +496,33 @@ function generateChart() {
     }
   });
 
-  $('.tile').draggable({
-    // If not appended to body $('#chart img') will include dragged clone
-    appendTo: 'body',
-    zIndex: 10,
-    helper: 'clone',
-    start: (e, ui) => {
-      $(ui.helper).css({
-        width: e.target.offsetWidth,
-        height: e.target.offsetHeight
-      });
-    },
-    stop: () => {
-      // Always fires after drop (or when dropped on a non-droppable area).
-      // Reset dragIndex and inline styles, then repaint so titles are rebuilt
-      // with correct order and updateTitlesHeight can set the container width.
-      dragIndex = -1;
-      const titlesEl = document.getElementById('titles');
-      const containerEl = document.getElementById('chartContainer');
-      if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
-      if (containerEl) containerEl.style.width = '';
-      repaintChart();
-    }
-  });
+  // Touch devices: long-press drag is handled by setupTileLongPressDrag()
+  // Desktop: use jQuery UI draggable with mouse
+  if (!('ontouchstart' in window)) {
+    $('.tile').draggable({
+      // If not appended to body $('#chart img') will include dragged clone
+      appendTo: 'body',
+      zIndex: 10,
+      helper: 'clone',
+      start: (e, ui) => {
+        $(ui.helper).css({
+          width: e.target.offsetWidth,
+          height: e.target.offsetHeight
+        });
+      },
+      stop: () => {
+        // Always fires after drop (or when dropped on a non-droppable area).
+        // Reset dragIndex and inline styles, then repaint so titles are rebuilt
+        // with correct order and updateTitlesHeight can set the container width.
+        dragIndex = -1;
+        const titlesEl = document.getElementById('titles');
+        const containerEl = document.getElementById('chartContainer');
+        if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
+        if (containerEl) containerEl.style.width = '';
+        repaintChart();
+      }
+    });
+  }
 
   resize();
   outerPadding();
@@ -918,6 +925,143 @@ function selectChart(e) {
 }
 
 /**
+ * Long-press-to-drag for tiles on touch screens.
+ * Called once at document ready. Uses passive event listeners on #chart so
+ * normal swipe-to-scroll is never blocked during the detection phase.
+ * overflow:hidden on the scroll wrapper suppresses scroll once drag is active.
+ */
+function setupTileLongPressDrag() {
+  var LONG_PRESS_MS = 400;
+  var CANCEL_PX = 10;
+
+  var timer = null;
+  var activeTouchId = null;
+  var startX = 0, startY = 0;
+  var prevX = 0, prevY = 0;
+  var helper = null;
+  var draggingTile = null;
+
+  function resetState() {
+    clearTimeout(timer);
+    timer = null;
+    activeTouchId = null;
+    draggingTile = null;
+  }
+
+  function endDrag() {
+    if (helper) { document.body.removeChild(helper); helper = null; }
+    document.querySelectorAll('#chart img.tile').forEach(function(img) {
+      img.style.opacity = '';
+    });
+    var sw = document.getElementById('chartScrollWrapper');
+    if (sw) sw.style.overflow = '';
+    if (dragIndex !== -1) {
+      dragIndex = -1;
+      var titlesEl = document.getElementById('titles');
+      var containerEl = document.getElementById('chartContainer');
+      if (titlesEl) { titlesEl.style.flex = ''; titlesEl.style.maxWidth = ''; }
+      if (containerEl) containerEl.style.width = '';
+      repaintChart();
+    }
+    resetState();
+  }
+
+  var chartEl = document.getElementById('chart');
+  if (!chartEl) return;
+
+  chartEl.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) { resetState(); return; }
+    var t = e.touches[0];
+    var tile = e.target.closest ? e.target.closest('img.tile') : null;
+    if (!tile) return;
+
+    activeTouchId = t.identifier;
+    startX = prevX = t.clientX;
+    startY = prevY = t.clientY;
+    draggingTile = tile;
+
+    timer = setTimeout(function() {
+      timer = null;
+      if (!draggingTile) return;
+      var tiles = document.querySelectorAll('#chart img.tile');
+      dragIndex = Array.prototype.indexOf.call(tiles, draggingTile);
+      if (dragIndex < 0) { dragIndex = -1; return; }
+
+      var rect = draggingTile.getBoundingClientRect();
+      helper = document.createElement('img');
+      helper.src = draggingTile.src;
+      helper.style.cssText =
+        'position:fixed;z-index:9999;pointer-events:none;object-fit:cover;' +
+        'opacity:0.85;left:' + rect.left + 'px;top:' + rect.top + 'px;' +
+        'width:' + rect.width + 'px;height:' + rect.height + 'px;' +
+        'transform:scale(1.08);transition:transform 0.12s;';
+      document.body.appendChild(helper);
+      setTimeout(function() { if (helper) helper.style.transform = ''; }, 140);
+
+      draggingTile.style.opacity = '0.2';
+      var sw = document.getElementById('chartScrollWrapper');
+      if (sw) sw.style.overflow = 'hidden';
+      if (window.navigator.vibrate) window.navigator.vibrate(30);
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+
+  chartEl.addEventListener('touchmove', function(e) {
+    var t = null;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === activeTouchId) { t = e.changedTouches[i]; break; }
+    }
+    if (!t) return;
+
+    if (!helper) {
+      if (Math.hypot(t.clientX - startX, t.clientY - startY) > CANCEL_PX) resetState();
+      return;
+    }
+
+    var dx = t.clientX - prevX;
+    var dy = t.clientY - prevY;
+    helper.style.left = (parseFloat(helper.style.left) + dx) + 'px';
+    helper.style.top  = (parseFloat(helper.style.top)  + dy) + 'px';
+    prevX = t.clientX;
+    prevY = t.clientY;
+
+    helper.style.visibility = 'hidden';
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    helper.style.visibility = '';
+    var hovered = (el && el.matches && el.matches('img.tile')) ? el
+                : (el && el.closest ? el.closest('img.tile') : null);
+
+    if (hovered && hovered !== draggingTile) {
+      var allTiles = document.querySelectorAll('#chart img.tile');
+      var newIdx = Array.prototype.indexOf.call(allTiles, hovered);
+      if (newIdx !== -1 && newIdx !== dragIndex) {
+        var srcMoved   = chart.sources.splice(dragIndex, 1)[0];
+        chart.sources.splice(newIdx, 0, srcMoved);
+        var titleMoved = chart.titles.splice(dragIndex, 1)[0];
+        chart.titles.splice(newIdx, 0, titleMoved);
+        dragIndex = newIdx;
+        repaintChart();
+        if (helper) helper.src = chart.sources[dragIndex];
+        draggingTile = document.querySelectorAll('#chart img.tile')[dragIndex];
+        document.querySelectorAll('#chart img.tile').forEach(function(img, i) {
+          img.style.opacity = i === dragIndex ? '0.2' : '';
+        });
+      }
+    }
+  }, { passive: true });
+
+  function onTouchEnd(e) {
+    var found = false;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === activeTouchId) { found = true; break; }
+    }
+    if (!found && !helper) { clearTimeout(timer); timer = null; return; }
+    endDrag();
+  }
+  chartEl.addEventListener('touchend',   onTouchEnd, { passive: true });
+  chartEl.addEventListener('touchcancel', onTouchEnd, { passive: true });
+}
+
+/**
  * Runs when window is ready
  */
 $(() => {
@@ -938,4 +1082,6 @@ $(() => {
   $('#imgImportURLDiv').hide();
   $('#imgImportFileRadio').prop('checked', true);
   window.onresize = resize;
+
+  if ('ontouchstart' in window) setupTileLongPressDrag();
 });
