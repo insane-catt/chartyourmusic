@@ -79,16 +79,6 @@ function updateTitlesHeight() {
     const containerEl = document.getElementById('chartContainer');
     const chartEl = document.getElementById('chart');
 
-    // On mobile the chart width should equal the scroll wrapper width (≈ screen width)
-    // so tiles fill the viewport. Using the scroll wrapper's offsetWidth is also
-    // stable across resize events: URL-bar show/hide changes viewport HEIGHT only,
-    // not WIDTH, so this value never drifts — fixing the aside-scroll shrink bug.
-    // On desktop, fall back to chartEl.offsetWidth (CSS-determined size).
-    const scrollWrapper = document.getElementById('chartScrollWrapper');
-    const chartW = (scrollWrapper && window.innerWidth <= 767)
-      ? scrollWrapper.offsetWidth
-      : chartEl.offsetWidth;
-
     // Override any CSS flex constraint on #titles (e.g. mobile 28% rule)
     titlesEl.style.flex = '0 0 auto';
     titlesEl.style.maxWidth = 'none';
@@ -105,6 +95,16 @@ function updateTitlesHeight() {
       this.style.width = tw + 'px';
       if (tw > maxTextW) maxTextW = tw;
     });
+
+    // Read chartW AFTER setting pixel widths — accessing offsetWidth forces a
+    // synchronous reflow, so the value reflects the corrected #titles width (not
+    // the temporary em-based widths from repaintChart). Reading before the loop
+    // caused the container to shrink on every repaint because the em widths
+    // made #titles appear wider than it should be, compressing #chart.
+    const scrollWrapper = document.getElementById('chartScrollWrapper');
+    const chartW = (scrollWrapper && window.innerWidth <= 767)
+      ? scrollWrapper.offsetWidth
+      : chartEl.offsetWidth;
 
     containerEl.style.width = (chartW + maxTextW + padRight) + 'px';
   } else if (chart) {
